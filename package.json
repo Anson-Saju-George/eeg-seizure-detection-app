@@ -7,9 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "tailwind:build": "npx @tailwindcss/cli -i ./src/input.css -o ./src/output.css",
-    "tailwind:watch": "npx @tailwindcss/cli -i ./src/input.css -o ./src/output.css --watch"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@radix-ui/react-progress": "^1.1.8",
@@ -35,7 +33,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
-    "@tailwindcss/cli": "^4.1.14",
     "@tailwindcss/postcss": "^4.2.2",
     "@types/node": "^25.6.0",
     "@types/papaparse": "^5.5.2",

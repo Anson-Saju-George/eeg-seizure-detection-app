@@ -10,14 +10,7 @@ Run the frontend:
 
 ```powershell
 npm install
-npm run tailwind:build
 npm run dev
-```
-
-For live Tailwind regeneration in development, use a second terminal:
-
-```powershell
-npm run tailwind:watch
 ```
 
 ## Backend
