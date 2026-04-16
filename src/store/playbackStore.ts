@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export type PlaybackSpeed = 0.5 | 1 | 2 | 4;
 
@@ -53,86 +54,97 @@ function createEvent(sampleIndex: number, probability: number, threshold: number
   };
 }
 
-export const usePlaybackStore = create<PlaybackState>((set, get) => ({
-  currentIndex: 0,
-  isPlaying: false,
-  speed: 1,
-  activeThreshold: 0.63,
-  maxIndex: 0,
-  eventLog: [],
-  lastAlertIndex: null,
-  initialize: (maxIndex, threshold) =>
-    set((state) => ({
-      maxIndex,
-      activeThreshold: threshold,
-      currentIndex: state.currentIndex > maxIndex ? 0 : state.currentIndex,
-    })),
-  play: () => set({ isPlaying: true }),
-  pause: () => set({ isPlaying: false }),
-  reset: () =>
-    set((state) => ({
+export const usePlaybackStore = create<PlaybackState>()(
+  persist(
+    (set, get) => ({
       currentIndex: 0,
       isPlaying: false,
-      speed: state.speed,
-      activeThreshold: state.activeThreshold,
-      maxIndex: state.maxIndex,
+      speed: 1,
+      activeThreshold: 0.63,
+      maxIndex: 0,
       eventLog: [],
       lastAlertIndex: null,
-    })),
-  stepForward: (nextProbability, previousProbability) => {
-    const state = get();
-    const nextIndex = Math.min(state.currentIndex + 1, state.maxIndex);
-    const shouldLog =
-      previousProbability < state.activeThreshold &&
-      nextProbability >= state.activeThreshold &&
-      state.lastAlertIndex !== nextIndex;
+      initialize: (maxIndex, threshold) =>
+        set((state) => ({
+          maxIndex,
+          activeThreshold: state.activeThreshold || threshold,
+          currentIndex: state.currentIndex > maxIndex ? 0 : state.currentIndex,
+        })),
+      play: () => set({ isPlaying: true }),
+      pause: () => set({ isPlaying: false }),
+      reset: () =>
+        set((state) => ({
+          currentIndex: 0,
+          isPlaying: false,
+          speed: state.speed,
+          activeThreshold: state.activeThreshold,
+          maxIndex: state.maxIndex,
+          eventLog: [],
+          lastAlertIndex: null,
+        })),
+      stepForward: (nextProbability, previousProbability) => {
+        const state = get();
+        const nextIndex = Math.min(state.currentIndex + 1, state.maxIndex);
+        const shouldLog =
+          previousProbability < state.activeThreshold &&
+          nextProbability >= state.activeThreshold &&
+          state.lastAlertIndex !== nextIndex;
 
-    set({
-      currentIndex: nextIndex,
-      eventLog: shouldLog
-        ? [
-            createEvent(nextIndex, nextProbability, state.activeThreshold),
-            ...state.eventLog,
-          ]
-        : state.eventLog,
-      lastAlertIndex: shouldLog ? nextIndex : state.lastAlertIndex,
-    });
-  },
-  stepBack: () =>
-    set((state) => ({
-      currentIndex: Math.max(state.currentIndex - 1, 0),
-      isPlaying: false,
-    })),
-  tick: (nextProbability, previousProbability) => {
-    const state = get();
-    if (!state.isPlaying) return;
+        set({
+          currentIndex: nextIndex,
+          eventLog: shouldLog
+            ? [
+                createEvent(nextIndex, nextProbability, state.activeThreshold),
+                ...state.eventLog,
+              ]
+            : state.eventLog,
+          lastAlertIndex: shouldLog ? nextIndex : state.lastAlertIndex,
+        });
+      },
+      stepBack: () =>
+        set((state) => ({
+          currentIndex: Math.max(state.currentIndex - 1, 0),
+          isPlaying: false,
+        })),
+      tick: (nextProbability, previousProbability) => {
+        const state = get();
+        if (!state.isPlaying) return;
 
-    const nextIndex = Math.min(state.currentIndex + 1, state.maxIndex);
-    const shouldLog =
-      previousProbability < state.activeThreshold &&
-      nextProbability >= state.activeThreshold &&
-      state.lastAlertIndex !== nextIndex;
+        const nextIndex = Math.min(state.currentIndex + 1, state.maxIndex);
+        const shouldLog =
+          previousProbability < state.activeThreshold &&
+          nextProbability >= state.activeThreshold &&
+          state.lastAlertIndex !== nextIndex;
 
-    set({
-      currentIndex: nextIndex,
-      isPlaying: nextIndex < state.maxIndex,
-      eventLog: shouldLog
-        ? [
-            createEvent(nextIndex, nextProbability, state.activeThreshold),
-            ...state.eventLog,
-          ]
-        : state.eventLog,
-      lastAlertIndex: shouldLog ? nextIndex : state.lastAlertIndex,
-    });
-  },
-  setSpeed: (speed) => set({ speed }),
-  setThreshold: (threshold) =>
-    set({
-      activeThreshold: threshold,
-      eventLog: [],
-      lastAlertIndex: null,
+        set({
+          currentIndex: nextIndex,
+          isPlaying: nextIndex < state.maxIndex,
+          eventLog: shouldLog
+            ? [
+                createEvent(nextIndex, nextProbability, state.activeThreshold),
+                ...state.eventLog,
+              ]
+            : state.eventLog,
+          lastAlertIndex: shouldLog ? nextIndex : state.lastAlertIndex,
+        });
+      },
+      setSpeed: (speed) => set({ speed }),
+      setThreshold: (threshold) =>
+        set({
+          activeThreshold: threshold,
+          eventLog: [],
+          lastAlertIndex: null,
+        }),
     }),
-}));
+    {
+      name: "seizure-monitor-playback",
+      partialize: (state) => ({
+        speed: state.speed,
+        activeThreshold: state.activeThreshold,
+      }),
+    },
+  ),
+);
 
 export function getPlaybackStatus(probability: number, threshold: number) {
   return toStatus(probability, threshold);

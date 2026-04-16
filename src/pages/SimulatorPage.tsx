@@ -10,6 +10,7 @@ import { ThresholdSimulator } from "@/components/simulator/ThresholdSimulator";
 import { AlertBanner } from "@/components/dashboard/AlertBanner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useArtifactBundle } from "@/hooks/useArtifactBundle";
 import { usePlaybackEngine } from "@/hooks/usePlaybackEngine";
 import {
@@ -121,15 +122,11 @@ export function SimulatorPage() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <Badge tone="info" className="w-fit">
-            Loading
-          </Badge>
-          <CardTitle>Preparing simulator modules</CardTitle>
-          <CardDescription>Loading artifacts and deterministic mock feature rows.</CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="space-y-6">
+        <Skeleton className="h-28" />
+        <Skeleton className="h-80" />
+        <Skeleton className="h-96" />
+      </div>
     );
   }
 

@@ -8,24 +8,33 @@ import { ResearchNotesPanel } from "@/components/research/ResearchNotesPanel";
 import { TrainingCharts } from "@/components/research/TrainingCharts";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useArtifactBundle } from "@/hooks/useArtifactBundle";
 import { deriveResearchMetrics } from "@/lib/research";
 
 export function ResearchPage() {
   const { data, error, isLoading } = useArtifactBundle();
-  const [colorMap, setColorMap] = useState<MatrixColorMap>("coolwarm");
+  const [colorMap, setColorMap] = useState<MatrixColorMap>(() => {
+    const stored = window.localStorage.getItem("research-colormap");
+    return (stored as MatrixColorMap) || "coolwarm";
+  });
+
+  function handleColorMapChange(value: MatrixColorMap) {
+    setColorMap(value);
+    window.localStorage.setItem("research-colormap", value);
+  }
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <Badge tone="info" className="w-fit">
-            Loading
-          </Badge>
-          <CardTitle>Preparing research analytics</CardTitle>
-          <CardDescription>Deriving curves, thresholds, and evaluation views from artifacts.</CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }, (_, index) => (
+            <Skeleton key={index} className="h-36" />
+          ))}
+        </div>
+        <Skeleton className="h-80" />
+        <Skeleton className="h-96" />
+      </div>
     );
   }
 
@@ -86,7 +95,7 @@ export function ResearchPage() {
         <ConfusionMatrixCard
           metrics={research.confusion}
           colorMap={colorMap}
-          onColorMapChange={setColorMap}
+          onColorMapChange={handleColorMapChange}
         />
         <ResearchNotesPanel bundle={data} />
       </div>
