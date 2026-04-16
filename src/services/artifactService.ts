@@ -3,7 +3,7 @@ import Papa from "papaparse";
 import { buildThresholdSweep } from "@/lib/metrics";
 import { clamp, mulberry32 } from "@/lib/seeded";
 import { apiClient } from "@/services/apiClient";
-import { hasBackendConfigured } from "@/services/appConfig";
+import { hasBackendConfigured, resolveAppPath } from "@/services/appConfig";
 import type {
   ArtifactBundle,
   ArtifactRecord,
@@ -14,7 +14,7 @@ import type {
   ThresholdRow,
 } from "@/types/artifacts";
 
-const DATA_ROOT = "/data";
+const DATA_ROOT = resolveAppPath("data");
 
 const DATA_FILES = [
   "config.json",

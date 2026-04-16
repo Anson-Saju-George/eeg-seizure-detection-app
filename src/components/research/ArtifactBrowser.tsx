@@ -2,6 +2,7 @@ import { Download, FileImage, FileJson, FileSpreadsheet, FileType2 } from "lucid
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { resolveAppPath } from "@/services/appConfig";
 import type { ArtifactRecord } from "@/types/artifacts";
 
 function getIcon(kind: ArtifactRecord["kind"]) {
@@ -47,7 +48,7 @@ export function ArtifactBrowser({ artifacts }: { artifacts: ArtifactRecord[] }) 
                   </Badge>
                   {artifact.available ? (
                     <a
-                      href={artifact.path}
+                      href={artifact.path.startsWith("/data/") ? resolveAppPath(artifact.path.slice(1)) : artifact.path}
                       download
                       className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-white/5 px-3 py-2 text-sm text-white"
                     >
