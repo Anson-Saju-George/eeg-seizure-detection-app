@@ -1,0 +1,12 @@
+{
+  "input_dim": 178,
+  "hidden_dims": [
+    256,
+    128,
+    64
+  ],
+  "dropout": 0.25,
+  "best_threshold": 0.63,
+  "seed": 42,
+  "csv_path": "Epileptic Seizure Recognition.csv"
+}
