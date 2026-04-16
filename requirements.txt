@@ -1,0 +1,24 @@
+# Core API runtime
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+pydantic==2.11.7
+python-multipart==0.0.20
+python-dotenv==1.1.1
+orjson==3.11.3
+httpx==0.28.1
+
+# Data processing
+numpy==2.3.2
+pandas==2.3.2
+scipy==1.16.2
+scikit-learn==1.7.2
+joblib==1.5.2
+
+# Model serving / real inference
+torch==2.8.0
+
+# Research / diagnostics
+tqdm==4.67.1
+matplotlib==3.10.6
+seaborn==0.13.2
+plotly==6.3.0
