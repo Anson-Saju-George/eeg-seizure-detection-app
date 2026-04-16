@@ -7,11 +7,13 @@ export function ResearchMetricCards({
   prAuc,
   bestF1,
   threshold,
+  bestF1Threshold,
 }: {
   rocAuc: number;
   prAuc: number;
   bestF1: number;
   threshold: number;
+  bestF1Threshold: number;
 }) {
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -30,7 +32,7 @@ export function ResearchMetricCards({
       <KpiCard
         label="Best F1"
         value={bestF1.toFixed(3)}
-        hint="Across threshold sweep"
+        hint={`Max F1 at threshold ${bestF1Threshold.toFixed(2)}`}
         icon={<Binary className="h-5 w-5" />}
       />
       <KpiCard

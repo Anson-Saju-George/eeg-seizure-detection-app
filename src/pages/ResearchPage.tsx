@@ -1,10 +1,13 @@
 import { useState } from "react";
 
+import { ArtifactUsageCard } from "@/components/research/ArtifactUsageCard";
 import { ArtifactBrowser } from "@/components/research/ArtifactBrowser";
 import { ConfusionMatrixCard, type MatrixColorMap } from "@/components/research/ConfusionMatrixCard";
 import { DerivedCharts } from "@/components/research/DerivedCharts";
+import { ModelCard } from "@/components/research/ModelCard";
 import { ResearchMetricCards } from "@/components/research/ResearchMetricCards";
 import { ResearchNotesPanel } from "@/components/research/ResearchNotesPanel";
+import { TrainingSetupCard } from "@/components/research/TrainingSetupCard";
 import { TrainingCharts } from "@/components/research/TrainingCharts";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,17 +82,37 @@ export function ResearchPage() {
         rocAuc={research.rocAuc}
         prAuc={research.prAuc}
         bestF1={research.bestF1}
+        bestF1Threshold={research.bestF1Threshold}
         threshold={data.config.best_threshold}
       />
+
+      <ModelCard bundle={data} />
+
+      <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+        <TrainingSetupCard />
+        <ArtifactUsageCard />
+      </div>
 
       <TrainingCharts history={data.history} />
 
       <DerivedCharts
         rocCurve={research.rocCurve}
         prCurve={research.prCurve}
-        thresholds={data.thresholds}
+        thresholds={research.thresholdSweep}
         histogram={research.histogram}
       />
+
+      {research.thresholdWarning ? (
+        <Card className="border-[rgba(255,209,102,0.24)]">
+          <CardHeader>
+            <Badge tone="warning" className="w-fit">
+              Threshold Validation
+            </Badge>
+            <CardTitle>Threshold sweep was validated against predictions</CardTitle>
+            <CardDescription>{research.thresholdWarning}</CardDescription>
+          </CardHeader>
+        </Card>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[1fr_0.95fr]">
         <ConfusionMatrixCard

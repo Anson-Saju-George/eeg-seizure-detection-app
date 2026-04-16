@@ -1,5 +1,5 @@
-import { calculateThresholdMetrics } from "@/lib/metrics";
-import type { ArtifactBundle, PredictionRow } from "@/types/artifacts";
+import { buildThresholdSweep, calculateThresholdMetrics } from "@/lib/metrics";
+import type { ArtifactBundle, PredictionRow, ThresholdRow } from "@/types/artifacts";
 
 function safeDivide(numerator: number, denominator: number) {
   return denominator === 0 ? 0 : numerator / denominator;
@@ -60,10 +60,73 @@ function buildHistogram(predictions: PredictionRow[]) {
   return buckets;
 }
 
+function isFiniteThresholdRow(row: ThresholdRow) {
+  return [
+    row.threshold,
+    row.tp,
+    row.tn,
+    row.fp,
+    row.fn,
+    row.precision,
+    row.recall,
+    row.f1,
+    row.balanced_accuracy,
+  ].every((value) => Number.isFinite(value));
+}
+
+function validateThresholdSweep(
+  predictions: PredictionRow[],
+  thresholdRows: ThresholdRow[],
+) {
+  const derived = buildThresholdSweep(predictions);
+
+  if (thresholdRows.length === 0) {
+    return {
+      sweep: derived,
+      source: "derived" as const,
+      warning: "Threshold table was empty. Using derived threshold sweep from test predictions.",
+    };
+  }
+
+  const sanitized = thresholdRows
+    .filter(isFiniteThresholdRow)
+    .sort((left, right) => left.threshold - right.threshold);
+
+  if (sanitized.length === 0) {
+    return {
+      sweep: derived,
+      source: "derived" as const,
+      warning: "Threshold table contained invalid values. Using derived threshold sweep instead.",
+    };
+  }
+
+  const bestProvided = sanitized.reduce((best, current) =>
+    current.f1 > best.f1 ? current : best,
+  );
+  const bestDerived = derived.reduce((best, current) =>
+    current.f1 > best.f1 ? current : best,
+  );
+
+  if (Math.abs(bestProvided.f1 - bestDerived.f1) > 0.05) {
+    return {
+      sweep: derived,
+      source: "derived" as const,
+      warning: "Threshold table disagreed with derived metrics. Using derived threshold sweep from predictions.",
+    };
+  }
+
+  return {
+    sweep: sanitized,
+    source: "artifact" as const,
+    warning: null,
+  };
+}
+
 export function deriveResearchMetrics(bundle: ArtifactBundle) {
   const bestThreshold = bundle.config.best_threshold;
   const confusion = calculateThresholdMetrics(bundle.predictions, bestThreshold);
   const curves = buildCurvePoints(bundle.predictions);
+  const validatedSweep = validateThresholdSweep(bundle.predictions, bundle.thresholds);
 
   const rocAuc = trapezoidArea(
     curves.roc
@@ -78,9 +141,9 @@ export function deriveResearchMetrics(bundle: ArtifactBundle) {
   );
 
   const thresholdBest =
-    bundle.thresholds.reduce(
+    validatedSweep.sweep.reduce(
       (best, current) => (current.f1 > best.f1 ? current : best),
-      bundle.thresholds[0] ?? confusion,
+      validatedSweep.sweep[0] ?? confusion,
     );
 
   return {
@@ -88,6 +151,9 @@ export function deriveResearchMetrics(bundle: ArtifactBundle) {
     rocCurve: curves.roc,
     prCurve: curves.pr,
     histogram: buildHistogram(bundle.predictions),
+    thresholdSweep: validatedSweep.sweep,
+    thresholdSweepSource: validatedSweep.source,
+    thresholdWarning: validatedSweep.warning,
     rocAuc,
     prAuc,
     bestF1Threshold: thresholdBest.threshold,
